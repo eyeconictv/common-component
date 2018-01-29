@@ -1,5 +1,5 @@
 import LocalMessaging from "./local-messaging";
 
-export  {
+export {
   LocalMessaging
 }
