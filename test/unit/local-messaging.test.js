@@ -4,6 +4,7 @@ describe("LocalMessaging", () => {
   let localMessaging = null;
   beforeEach(() => {
     top.RiseVision = {};
+    top.RiseVision.Viewer = {};
     top.RiseVision.Viewer.LocalMessaging = {
       write: (message) => {},
       receiveMessages: (handler) => {},
