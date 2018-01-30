@@ -1,0 +1,23 @@
+version: 2
+
+jobs:
+  "test":
+    docker: &DOCKERIMAGE
+      - image: jenkinsrise/cci-v2-docker-e2e:0.0.1
+    steps:
+      - checkout
+      - restore_cache:
+          key: node-cache-v2{{ checksum "package.json" }}
+      - run: npm install
+      - save_cache:
+          key: node-cache-v2{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+      - run:
+          command: npm run test
+          no_output_timeout: 1m
+workflows:
+  version: 2
+  workflow1:
+    jobs:
+      - "test"
