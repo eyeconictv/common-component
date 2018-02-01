@@ -13,6 +13,7 @@ export default class LocalMessaging {
       }
     } catch (err) {
       console.log( "common-component: ws-client", err );
+      return false;
     }
   }
 
