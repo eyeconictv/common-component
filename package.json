@@ -4,7 +4,9 @@
   "description": "Common code for new rise components",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test-unit": "jest",
+    "test-integration": "mocha -t 10000 test/integration",
+    "test": "npm run test-unit && npm run test-integration"
   },
   "repository": {
     "type": "git",
@@ -22,6 +24,9 @@
     "babel-jest": "^22.1.0",
     "babel-preset-env": "^1.6.1",
     "jest": "^22.1.4",
-    "regenerator-runtime": "^0.11.1"
+    "mocha": "^4.0.0",
+    "regenerator-runtime": "^0.11.1",
+    "common-display-module": "git://github.com/Rise-Vision/common-display-module.git#v2.5.0",
+    "rise-common-electron": "git://github.com/Rise-Vision/rise-common-electron.git#v2.2.5"
   }
 }
