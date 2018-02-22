@@ -1,5 +1,3 @@
-import LocalMessaging from "./local-messaging";
-
 let displaySettings = {};
 let companySettings = {};
 
@@ -19,8 +17,6 @@ export default class ExternalLogger {
 
     if (!message){
       error = "Message is required";
-    } else if (!message.from) {
-      error = "From is required";
     } else if (!message.data.projectName) {
       error = "BQ project name is required";
     } else if (!message.data.datasetName) {
@@ -42,11 +38,10 @@ export default class ExternalLogger {
     const displayId = displaySettings.displayid || displaySettings.tempdisplayid || detail.display_id || "preview";
     const companyId = companySettings.companyid || companySettings.tempcompanyid || detail.company_id || "";
 
-    const data = Object.assign({}, {"event": evt, "display_id": displayId, "company_id": companyId}, detail);
+    const data = Object.assign({}, {"event": evt, "display_id": displayId, "company_id": companyId, "component_name": this.componentName}, detail);
 
     return {
         "topic": "log",
-        "from": this.componentName,
         "data": {
           "projectName": this.projectName,
           "datasetName": this.datasetName,
@@ -65,7 +60,6 @@ export default class ExternalLogger {
     const errorMessage = this._validateMessage(message, detail);
 
     if (!errorMessage && this.localMessaging.canConnect()) {
-      console.log(message);
       this.localMessaging.broadcastMessage(message);
     } else {
       console.log(`external-logger error - ${this.componentName + " component" || "source component undefined"}: ${errorMessage}`);
