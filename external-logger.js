@@ -4,8 +4,8 @@ let displaySettings = {};
 let companySettings = {};
 
 export default class ExternalLogger {
-  constructor(projectName, datasetName, failedEntryFile, table, componentName) {
-    this.localMessaging = new LocalMessaging();
+  constructor(localMessaging, projectName, datasetName, failedEntryFile, table, componentName) {
+    this.localMessaging = localMessaging;
 
     this.projectName = projectName;
     this.datasetName = datasetName;
@@ -58,6 +58,8 @@ export default class ExternalLogger {
   }
 
   log(evt, detail) {
+    if (!this.localMessaging) { return; }
+
     const message = this._constructMessage(evt, detail);
 
     const errorMessage = this._validateMessage(message, detail);
