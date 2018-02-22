@@ -80,13 +80,13 @@ describe("ExternalLogger", () => {
     it("should send message to LM and log to BQ", () => {
       let expectedMessage = {
         topic: 'log',
-        from: 'component-name',
         data: {
           'projectName': 'project-name',
           'datasetName': 'dataset-name',
           'failedEntryFile': 'failed-entryfile',
           'table': 'table',
           'data': {
+            'component_name': 'component-name',
             'event': 'event',
             "detail": "testDetail",
             "display_id": "preview",
