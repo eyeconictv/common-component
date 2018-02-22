@@ -1,7 +1,9 @@
 import ExternalLogger from "../../external-logger";
+import LocalMessaging from "../../local-messaging";
 
 describe("ExternalLogger", () => {
   let externalLogger = null;
+  let localMessaging = null;
   beforeEach(() => {
     console.log = jest.fn();
 
@@ -16,12 +18,13 @@ describe("ExternalLogger", () => {
     top.RiseVision.Viewer.LocalMessaging.write = jest.genMockFn();
     top.RiseVision.Viewer.LocalMessaging.receiveMessages = jest.genMockFn();
 
-    externalLogger = new ExternalLogger("project-name", "dataset-name", "failed-entryfile", "table", "component-name");
+    localMessaging = new LocalMessaging();
+    externalLogger = new ExternalLogger(localMessaging, "project-name", "dataset-name", "failed-entryfile", "table", "component-name");
   });
 
   describe("initialization", () => {
     it("should create an instance of external-logger with a log function", () => {
-      externalLogger = new ExternalLogger("a", "b", "c", "d", "e");
+      externalLogger = new ExternalLogger(localMessaging, "a", "b", "c", "d", "e");
       expect(externalLogger.hasOwnProperty("log")).toBeTruthy;
       expect(externalLogger.projectName).toBe("a");
       expect(externalLogger.datasetName).toBe("b");
@@ -35,29 +38,41 @@ describe("ExternalLogger", () => {
     it("should not send message to LM and log if message.event is invalid", () => {
       externalLogger.log("", {"detail": "testDetail"});
       expect(console.log).toBeCalledWith("external-logger error - component-name component: BQ event is required");
+      expect(top.RiseVision.Viewer.LocalMessaging.write).not.toHaveBeenCalled();
     });
 
     it("should not send message to LM and log if message.details is invalid", () => {
       externalLogger.log("event", {});
       expect(console.log).toBeCalledWith("external-logger error - component-name component: BQ detail is required");
+      expect(top.RiseVision.Viewer.LocalMessaging.write).not.toHaveBeenCalled();
     });
 
     it("should not send message to LM and log if message.data.projectName is invalid", () => {
-      externalLogger = new ExternalLogger("", "dataset-name", "failed-entryfile", "table", "component-name");
+      externalLogger = new ExternalLogger(localMessaging, "", "dataset-name", "failed-entryfile", "table", "component-name");
       externalLogger.log("event", {"detail": "testDetail"});
       expect(console.log).toBeCalledWith("external-logger error - component-name component: BQ project name is required");
+      expect(top.RiseVision.Viewer.LocalMessaging.write).not.toHaveBeenCalled();
     });
 
     it("should not send message to LM and log if message.data.datasetName is invalid", () => {
-      externalLogger = new ExternalLogger("project-name", "", "failed-entryfile", "table", "component-name");
+      externalLogger = new ExternalLogger(localMessaging, "project-name", "", "failed-entryfile", "table", "component-name");
       externalLogger.log("event", {"detail": "testDetail"});
       expect(console.log).toBeCalledWith("external-logger error - component-name component: BQ dataset name is required");
+      expect(top.RiseVision.Viewer.LocalMessaging.write).not.toHaveBeenCalled();
     });
 
     it("should not send message to LM and log if message.data.failedEntryFile is invalid", () => {
-      externalLogger = new ExternalLogger("project-name", "dataset-name", "", "table", "component-name");
+      externalLogger = new ExternalLogger(localMessaging, "project-name", "dataset-name", "", "table", "component-name");
       externalLogger.log("event", {"detail": "testDetail"});
       expect(console.log).toBeCalledWith("external-logger error - component-name component: BQ failed entry file is required");
+      expect(top.RiseVision.Viewer.LocalMessaging.write).not.toHaveBeenCalled();
+    });
+
+    it("should not send message to LM if local messaging not instantiated", () => {
+      externalLogger = new ExternalLogger(null, "project-name", "dataset-name", "", "table", "component-name");
+      externalLogger.log("event", {"detail": "testDetail"});
+      expect(console.log).not.toBeCalled();
+      expect(top.RiseVision.Viewer.LocalMessaging.write).not.toHaveBeenCalled();
     });
   });
 
