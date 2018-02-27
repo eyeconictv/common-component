@@ -1,7 +1,9 @@
 export default class LocalMessaging {
-  constructor() {
+
+  init() {
     this.localMessaging = top.RiseVision.Viewer.LocalMessaging;
   }
+
   broadcastMessage(message) {
     this._safeWrite(message);
   }
