@@ -2,7 +2,7 @@ let displaySettings = {};
 let companySettings = {};
 
 export default class ExternalLogger {
-  constructor(localMessaging, projectName, datasetName, failedEntryFile, table, componentName) {
+  constructor(localMessaging, projectName, datasetName, failedEntryFile, table, componentName, componentId) {
     this.localMessaging = localMessaging;
 
     this.projectName = projectName;
@@ -10,6 +10,7 @@ export default class ExternalLogger {
     this.failedEntryFile = failedEntryFile;
     this.table = table;
     this.componentName = componentName;
+    this.componentId = componentId;
   }
 
   _validateMessage(message, detail) {
@@ -38,7 +39,7 @@ export default class ExternalLogger {
     const displayId = displaySettings.displayid || displaySettings.tempdisplayid || detail.display_id || "preview";
     const companyId = companySettings.companyid || companySettings.tempcompanyid || detail.company_id || "";
 
-    const data = Object.assign({}, {"event": evt, "display_id": displayId, "company_id": companyId, "component_name": this.componentName}, detail);
+    const data = Object.assign({}, {"event": evt, "display_id": displayId, "company_id": companyId, "component_name": this.componentName, "component_id": this.componentId}, detail);
 
     return {
         "topic": "log",

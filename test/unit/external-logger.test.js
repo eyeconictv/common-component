@@ -19,18 +19,19 @@ describe("ExternalLogger", () => {
     top.RiseVision.Viewer.LocalMessaging.receiveMessages = jest.genMockFn();
 
     localMessaging = new LocalMessaging();
-    externalLogger = new ExternalLogger(localMessaging, "project-name", "dataset-name", "failed-entryfile", "table", "component-name");
+    externalLogger = new ExternalLogger(localMessaging, "project-name", "dataset-name", "failed-entryfile", "table", "component-name", "component-id");
   });
 
   describe("initialization", () => {
     it("should create an instance of external-logger with a log function", () => {
-      externalLogger = new ExternalLogger(localMessaging, "a", "b", "c", "d", "e");
+      externalLogger = new ExternalLogger(localMessaging, "a", "b", "c", "d", "e", "f");
       expect(externalLogger.hasOwnProperty("log")).toBeTruthy;
       expect(externalLogger.projectName).toBe("a");
       expect(externalLogger.datasetName).toBe("b");
       expect(externalLogger.failedEntryFile).toBe("c");
       expect(externalLogger.table).toBe("d");
       expect(externalLogger.componentName).toBe("e");
+      expect(externalLogger.componentId).toBe("f");
     });
   });
 
@@ -90,7 +91,8 @@ describe("ExternalLogger", () => {
             'event': 'event',
             "detail": "testDetail",
             "display_id": "preview",
-            "company_id": ""
+            "company_id": "",
+            "component_id": "component-id"
           }
         }
       };
