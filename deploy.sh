@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VERSION=$(cat version)
-OUTPUTDIR="beta/"
+OUTPUTDIR="beta"
 #MANIFESTFILES="display-modules-beta*.json"
 #ROLLOUTPCT="-"
 
@@ -22,6 +22,5 @@ gcloud auth activate-service-account 452091732215@developer.gserviceaccount.com 
 gsutil setmeta -h "Cache-Control:private, max-age=0" gs://widgets.risevision.com/staging/components/$COMPONENTNAME/$VERSION/*
 gsutil setmeta -h "Content-Disposition:attachment" gs://widgets.risevision.com/staging/components/$COMPONENTNAME/$VERSION/*.sh
 gsutil acl ch -u AllUsers:R gs://widgets.risevision.com/staging/components/$COMPONENTNAME/$VERSION/*
-gsutil -m cp -p gs://widgets.risevision.com/${OUTPUTDIR}*.{sh,exe,json} gs://widgets.risevision.com/backups/$VERSION
 gsutil -m cp -p gs://widgets.risevision.com/staging/components/$COMPONENTNAME/$VERSION/* gs://widgets.risevision.com/releases/components/$COMPONENTNAME/$VERSION
 gsutil -m cp -p gs://widgets.risevision.com/staging/components/$COMPONENTNAME/$VERSION/* gs://widgets.risevision.com/$OUTPUTDIR/components/$COMPONENTNAME
