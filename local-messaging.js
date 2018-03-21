@@ -1,18 +1,21 @@
 export default class LocalMessaging {
   constructor() {
-    this.localMessaging = top.RiseVision.Viewer.LocalMessaging;
+    try {
+      if ( top.RiseVision.Viewer.LocalMessaging ) {
+        this.localMessaging = top.RiseVision.Viewer.LocalMessaging;
+      }
+    } catch ( err ) {
+      console.log( "common-component: ws-client", err );
+    }
   }
   broadcastMessage(message) {
     this._safeWrite(message);
   }
 
   canConnect() {
-    try {
-      if (this.localMessaging) {
-        return this.localMessaging.canConnect();
-      }
-    } catch (err) {
-      console.log( "common-component: ws-client", err );
+    if (this.localMessaging) {
+      return this.localMessaging.canConnect();
+    } else {
       return false;
     }
   }
@@ -24,22 +27,14 @@ export default class LocalMessaging {
   receiveMessages(handler) {
     if (!handler || typeof handler !== "function") {return;}
 
-    try {
-      if (this.localMessaging) {
-        this.localMessaging.receiveMessages(handler);
-      }
-    } catch (err) {
-      console.log( "common-component: ws-client", err );
+    if (this.localMessaging) {
+      this.localMessaging.receiveMessages(handler);
     }
   }
 
   _safeWrite(message) {
-    try {
-      if (this.localMessaging) {
-        this.localMessaging.write(message);
-      }
-    } catch (err) {
-      console.log( "common-component: ws-client", err );
+    if (this.localMessaging) {
+      this.localMessaging.write(message);
     }
   }
 }
