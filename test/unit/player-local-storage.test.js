@@ -1,8 +1,8 @@
-import LocalStorage from "../../local-storage";
 import LocalMessaging from "../../local-messaging";
+import PlayerLocalStorage from "../../player-local-storage";
 
-describe("LocalStorage", () => {
-  let localStorage = null;
+describe("PlayerLocalStorage", () => {
+  let playerLocalStorage = null;
   let localMessaging = null;
   let eventHandler = null;
 
@@ -33,7 +33,7 @@ describe("LocalStorage", () => {
       mockViewerLocalMessaging(false);
 
       localMessaging = new LocalMessaging();
-      localStorage = new LocalStorage(localMessaging, eventHandler);
+      playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
 
       expect(eventHandler).toHaveBeenCalledWith({
         "event": "no-connection"
@@ -44,7 +44,7 @@ describe("LocalStorage", () => {
       mockViewerLocalMessaging(true);
 
       localMessaging = new LocalMessaging();
-      localStorage = new LocalStorage(localMessaging, eventHandler);
+      playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
 
       expect(eventHandler).toHaveBeenCalledTimes(0);
       expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
@@ -58,7 +58,7 @@ describe("LocalStorage", () => {
     beforeEach(() => {
       jest.useFakeTimers();
       localMessaging = new LocalMessaging();
-      localStorage = new LocalStorage(localMessaging, eventHandler);
+      playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
     });
 
     afterEach(() => {
@@ -72,7 +72,7 @@ describe("LocalStorage", () => {
           "clients": ["local-messaging", "player-electron", "local-storage", "licensing", "logger"]
         };
 
-        localStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
 
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
           "topic": "storage-licensing-request"
@@ -86,7 +86,7 @@ describe("LocalStorage", () => {
         };
 
         top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        localStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
         jest.advanceTimersByTime(1000);
         expect(eventHandler).toHaveBeenCalledTimes(0);
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
@@ -94,7 +94,7 @@ describe("LocalStorage", () => {
         });
 
         top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        localStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
         jest.advanceTimersByTime(1000);
         expect(eventHandler).toHaveBeenCalledTimes(0);
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
@@ -102,7 +102,7 @@ describe("LocalStorage", () => {
         });
 
         top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        localStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
         jest.advanceTimersByTime(1000);
         expect(eventHandler).toHaveBeenCalledTimes(0);
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
@@ -111,7 +111,7 @@ describe("LocalStorage", () => {
 
 
         top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        localStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
         jest.advanceTimersByTime(1000);
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
         expect(eventHandler).toHaveBeenCalledWith({
@@ -129,9 +129,9 @@ describe("LocalStorage", () => {
           "userFriendlyStatus": "unauthorized"
         };
 
-        localStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
 
-        expect(localStorage.isAuthorized()).toBeFalsy;
+        expect(playerLocalStorage.isAuthorized()).toBeFalsy;
         expect(eventHandler).toHaveBeenCalledWith({
           "event": "unauthorized"
         });
@@ -140,9 +140,9 @@ describe("LocalStorage", () => {
         message.userFriendlyStatus = "authorized";
         eventHandler.mockClear();
 
-        localStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
 
-        expect(localStorage.isAuthorized()).toBeTruthy;
+        expect(playerLocalStorage.isAuthorized()).toBeTruthy;
         expect(eventHandler).toHaveBeenCalledWith({
           "event": "authorized"
         });

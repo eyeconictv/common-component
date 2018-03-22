@@ -1,4 +1,4 @@
-export default class LocalStorage {
+export default class PlayerLocalStorage {
   constructor(localMessaging, eventsHandler) {
     this.localMessaging = localMessaging;
     this.eventsHandler = eventsHandler;

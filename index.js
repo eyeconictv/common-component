@@ -1,9 +1,9 @@
 import LocalMessaging from "./local-messaging";
 import ExternalLogger from "./external-logger";
-import LocalStorage from "./local-storage";
+import PlayerLocalStorage from "./player-local-storage";
 
 export {
   LocalMessaging,
   ExternalLogger,
-  LocalStorage
+  PlayerLocalStorage
 }
