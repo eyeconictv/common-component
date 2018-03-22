@@ -121,6 +121,10 @@ describe("PlayerLocalStorage", () => {
     });
 
     describe("STORAGE-LICENSING-UPDATE", () => {
+      beforeEach(()=>{
+        eventHandler.mockClear();
+      });
+
       it("should update authorization and execute 'licensing' event on event handler", () => {
         const message = {
           "from": "storage-module",
@@ -131,7 +135,7 @@ describe("PlayerLocalStorage", () => {
 
         playerLocalStorage._handleMessage(message);
 
-        expect(playerLocalStorage.isAuthorized()).toBeFalsy;
+        expect(playerLocalStorage.isAuthorized()).toBeFalsy();
         expect(eventHandler).toHaveBeenCalledWith({
           "event": "unauthorized"
         });
@@ -142,11 +146,32 @@ describe("PlayerLocalStorage", () => {
 
         playerLocalStorage._handleMessage(message);
 
-        expect(playerLocalStorage.isAuthorized()).toBeTruthy;
+        expect(playerLocalStorage.isAuthorized()).toBeTruthy();
         expect(eventHandler).toHaveBeenCalledWith({
           "event": "authorized"
         });
       });
+    });
+
+    it("should not update authorization or execute event on handler if authorization hasn't changed", () => {
+      const message = {
+        "from": "storage-module",
+        "topic": "storage-licensing-update",
+        "isAuthorized": true,
+        "userFriendlyStatus": "authorized"
+      };
+
+      expect(playerLocalStorage.isAuthorized()).toBeNull();
+
+      playerLocalStorage._handleMessage(message);
+
+      expect(playerLocalStorage.isAuthorized()).toBeTruthy();
+      expect(eventHandler).toHaveBeenCalledTimes(1);
+
+      playerLocalStorage._handleMessage(message);
+      expect(playerLocalStorage.isAuthorized()).toBeTruthy();
+      expect(eventHandler).toHaveBeenCalledTimes(1);
+
     });
 
   });

@@ -3,7 +3,7 @@ export default class PlayerLocalStorage {
     this.localMessaging = localMessaging;
     this.eventsHandler = eventsHandler;
     this.requiredModulesTries = 0;
-    this.authorized = false;
+    this.authorized = null;
 
     this._bindReceiveMessagesHandler();
 
@@ -65,12 +65,17 @@ export default class PlayerLocalStorage {
 
   _handleLicensingUpdate(message) {
     if (message && message.userFriendlyStatus) {
-      console.log(`Authorization status changed - ${message.userFriendlyStatus}`);
+      const previousAuthorized = this.authorized;
+      const currentAuthorized = message.isAuthorized;
 
-      this.authorized = message.isAuthorized;
-      this._sendEvent({
-        "event": message.userFriendlyStatus
-      });
+      // detect licensing change
+      if (previousAuthorized !== currentAuthorized) {
+        this.authorized = message.isAuthorized;
+
+        this._sendEvent({
+          "event": message.userFriendlyStatus
+        });
+      }
     } else {
       console.log(`Error: Invalid STORAGE-LICENSING-UPDATE message - ${message}`);
     }
