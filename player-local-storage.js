@@ -51,14 +51,14 @@ export default class PlayerLocalStorage {
       return;
     }
 
-    if (this.requiredModulesTries < 3) {
+    if (this.requiredModulesTries < 30) {
       this.requiredModulesTries += 1;
       // request client list again after 1 second delay
       setTimeout(()=>{this._sendClientListRequest();}, 1000);
     } else {
-      // attempted 3 times, notify widget/component
+      // attempted 30 times, notify widget/component
       this._sendEvent({
-        "event": "no-required-modules"
+        "event": "required-modules-unavailable"
       });
     }
   }

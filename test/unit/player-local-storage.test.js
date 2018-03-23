@@ -77,7 +77,7 @@ describe("PlayerLocalStorage", () => {
         });
       });
 
-      it("should send CLIENT-LIST-REQUEST 3 more times every 1 second before executing no-required-modules event on event handler", () => {
+      it("should send CLIENT-LIST-REQUEST 30 more times every 1 second before executing required-modules-unavailable event on event handler", () => {
         const message = {
           "topic": "client-list",
           "clients": ["local-messaging", "player-electron", "logger"]
@@ -91,29 +91,14 @@ describe("PlayerLocalStorage", () => {
           "topic": "client-list-request"
         });
 
-        top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        playerLocalStorage._handleMessage(message);
-        jest.advanceTimersByTime(1000);
-        expect(eventHandler).toHaveBeenCalledTimes(0);
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
-          "topic": "client-list-request"
-        });
+        // mock 30 more client-list messages sent/received
+        for (let i = 30; i > 0; i--){
+          playerLocalStorage._handleMessage(message);
+          jest.advanceTimersByTime(1000);
+        }
 
-        top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        playerLocalStorage._handleMessage(message);
-        jest.advanceTimersByTime(1000);
-        expect(eventHandler).toHaveBeenCalledTimes(0);
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
-          "topic": "client-list-request"
-        });
-
-
-        top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        playerLocalStorage._handleMessage(message);
-        jest.advanceTimersByTime(1000);
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
         expect(eventHandler).toHaveBeenCalledWith({
-          "event": "no-required-modules"
+          "event": "required-modules-unavailable"
         })
       });
     });
