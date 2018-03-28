@@ -4,6 +4,7 @@ export default class PlayerLocalStorage {
     this.eventsHandler = eventsHandler;
     this.requiredModulesTries = 0;
     this.authorized = null;
+    this.files = new Map();
 
     this._bindReceiveMessagesHandler();
 
@@ -37,6 +38,10 @@ export default class PlayerLocalStorage {
         return this._handleClientListUpdate(message);
       case "STORAGE-LICENSING-UPDATE":
         return this._handleLicensingUpdate(message);
+      case "FILE-UPDATE":
+        return this._handleFileUpdate( message );
+      case "FILE-ERROR":
+        return this._handleFileError( message );
     }
   }
 
@@ -81,14 +86,75 @@ export default class PlayerLocalStorage {
     }
   }
 
+  _handleFileUpdate(message) {
+    if ( !message || !message.filePath || !message.status ) {return;}
+
+    const {filePath, status, ospath} = message;
+    const watchedFileStatus = this.files.get(filePath);
+
+    // file is not being watched
+    if (!watchedFileStatus) {return;}
+    // status hasn't changed
+    if (watchedFileStatus === status) {return;}
+
+    this.files.set(filePath, status);
+
+    switch (status.toUpperCase()) {
+      case "CURRENT":
+        this._sendEvent({"event": "file-available", filePath, "fileUrl": `file://${ospath}`});
+        break;
+      case "STALE":
+        this._sendEvent({"event": "file-processing", filePath});
+        break;
+      case "NOEXIST":
+        this._sendEvent({"event": "file-no-exist", filePath});
+        break;
+      case "DELETED":
+        this._sendEvent({"event": "file-deleted", filePath});
+        break;
+    }
+  }
+
+  _handleFileError(message) {
+    if (!message || !message.filePath) {return;}
+
+    const {filePath, msg, detail} = message;
+    const watchedFile = this.files.get(filePath);
+
+    if (!watchedFile) {return;}
+
+    this._sendEvent({"event": "file-error", filePath, msg, detail});
+  }
+
   _sendEvent(event) {
     if (!this.eventsHandler || typeof this.eventsHandler !== "function" || !event) {return;}
     this.eventsHandler(event);
   }
 
+  _watchFile(filePath) {
+    this.files.set(filePath, "UNKNOWN");
+    this.localMessaging.broadcastMessage({
+      "topic": "WATCH",
+      "filePath": filePath
+    });
+  }
+
   /*
   PUBLIC API
    */
+
+  watchFiles(filePaths) {
+    if (!this.isAuthorized() || !this.isConnected()) {return;}
+
+    if (typeof filePaths === "string") {
+      if (!this.files.has(filePaths)) {
+        this._watchFile(filePaths);
+      }
+    } else if (Array.isArray(filePaths)) {
+      const filesNotWatched = filePaths.filter(path => !this.files.has(path));
+      filesNotWatched.forEach(path => this._watchFile(path));
+    }
+  }
 
   isAuthorized() {
     return this.authorized;
