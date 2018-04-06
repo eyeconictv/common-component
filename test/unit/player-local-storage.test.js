@@ -241,6 +241,28 @@ describe("PlayerLocalStorage", () => {
         expect(eventHandler).toHaveBeenCalledTimes(0);
       });
 
+      it("should not apply file:// to fileUrl if http exists in ospath", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-update",
+          "filePath": "test.png",
+          "status": "stale"
+        };
+
+        playerLocalStorage.watchFiles("test.png");
+        playerLocalStorage._handleMessage(message);
+
+        message.status = "CURRENT";
+        message.ospath = "http://localhost:8080/cache/ABC123";
+
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledWith({
+          event: "file-available",
+          filePath: "test.png",
+          fileUrl: "http://localhost:8080/cache/ABC123"
+        });
+      });
+
       it("should execute 'file-processing' event on event handler when status is STALE", () => {
         const message = {
           "from": "storage-module",

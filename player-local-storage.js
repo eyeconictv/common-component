@@ -101,7 +101,7 @@ export default class PlayerLocalStorage {
 
     switch (status.toUpperCase()) {
       case "CURRENT":
-        this._sendEvent({"event": "file-available", filePath, "fileUrl": `file://${ospath}`});
+        this._sendEvent({"event": "file-available", filePath, "fileUrl": ospath.startsWith("http") ? ospath : `file://${ospath}`});
         break;
       case "STALE":
         this._sendEvent({"event": "file-processing", filePath});
