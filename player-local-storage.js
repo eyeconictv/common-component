@@ -93,7 +93,7 @@ export default class PlayerLocalStorage {
   }
 
   _handleLicensingUpdate(message) {
-    if (message && message.userFriendlyStatus) {
+    if (message && typeof message.hasOwnProperty("isAuthorized")) {
       this._clearLicensingRequestTimer();
 
       const previousAuthorized = this.authorized;
@@ -104,7 +104,7 @@ export default class PlayerLocalStorage {
         this.authorized = message.isAuthorized;
 
         this._sendEvent({
-          "event": message.userFriendlyStatus
+          "event": message.isAuthorized ? "authorized": "unauthorized",
         });
       }
     } else {
