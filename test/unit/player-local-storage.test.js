@@ -242,15 +242,16 @@ describe("PlayerLocalStorage", () => {
           "topic": "file-update",
           "filePath": "test.png",
           "status": "current",
-          "ospath": "rvplayer/modules/local-storage/xxxx/cache/ABC123"
+          "ospath": "rvplayer/modules/local-storage/xxxx/cache/ABC123",
+          "osurl": "file:///rvplayer/modules/local-storage/xxxx/cache/ABC123"
         };
 
         playerLocalStorage.watchFiles("test.png");
         playerLocalStorage._handleMessage(message);
         expect(eventHandler).toHaveBeenCalledWith({
           event: "file-available",
-          filePath: "test.png",
-          fileUrl: "file://rvplayer/modules/local-storage/xxxx/cache/ABC123"
+          filePath: message.filePath,
+          fileUrl: message.osurl
         });
       });
 
@@ -260,7 +261,8 @@ describe("PlayerLocalStorage", () => {
           "topic": "file-update",
           "filePath": "test.png",
           "status": "current",
-          "ospath": "rvplayer/modules/local-storage/xxxx/cache/ABC123"
+          "ospath": "rvplayer/modules/local-storage/xxxx/cache/ABC123",
+          "osurl": "rvplayer/modules/local-storage/xxxx/cache/ABC123"
         };
 
         playerLocalStorage.watchFiles("test.png");
@@ -271,28 +273,6 @@ describe("PlayerLocalStorage", () => {
 
         playerLocalStorage._handleMessage(message);
         expect(eventHandler).toHaveBeenCalledTimes(0);
-      });
-
-      it("should not apply file:// to fileUrl if http exists in ospath", () => {
-        const message = {
-          "from": "storage-module",
-          "topic": "file-update",
-          "filePath": "test.png",
-          "status": "stale"
-        };
-
-        playerLocalStorage.watchFiles("test.png");
-        playerLocalStorage._handleMessage(message);
-
-        message.status = "CURRENT";
-        message.ospath = "http://localhost:8080/cache/ABC123";
-
-        playerLocalStorage._handleMessage(message);
-        expect(eventHandler).toHaveBeenCalledWith({
-          event: "file-available",
-          filePath: "test.png",
-          fileUrl: "http://localhost:8080/cache/ABC123"
-        });
       });
 
       it("should execute 'file-processing' event on event handler when status is STALE", () => {
