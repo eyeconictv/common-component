@@ -93,7 +93,7 @@ export default class PlayerLocalStorage {
   }
 
   _handleLicensingUpdate(message) {
-    if (message && typeof message.hasOwnProperty("isAuthorized")) {
+    if (message && message.hasOwnProperty("isAuthorized")) {
       this._clearLicensingRequestTimer();
 
       const previousAuthorized = this.authorized;
