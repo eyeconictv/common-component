@@ -64,19 +64,18 @@ describe("PlayerLocalStorage", () => {
     });
 
     describe("CLIENT-LIST", () => {
-      it("should start licensing request(s) when required modules are present", () => {
+      it("should send STORAGE-LICENSING-REQUEST  when required modules are present", () => {
         const message = {
           "topic": "client-list",
           "clients": ["local-messaging", "player-electron", "local-storage", "licensing", "logger"]
         };
 
-        const spy = jest.spyOn(playerLocalStorage, "_startLicensingRequestTimer");
-
+        top.RiseVision.Viewer.LocalMessaging.write.mockClear();
         playerLocalStorage._handleMessage(message);
 
-        expect(spy).toHaveBeenCalled();
-        spy.mockReset();
-        spy.mockRestore();
+        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
+          "topic": "storage-licensing-request"
+        });
       });
 
       it("should send CLIENT-LIST-REQUEST 30 more times every 1 second before executing required-modules-unavailable event on event handler", () => {
@@ -110,29 +109,6 @@ describe("PlayerLocalStorage", () => {
         eventHandler.mockClear();
       });
 
-      it("should send STORAGE-LICENSING-REQUEST 30 more times every 1 second before executing licensing-unavailable event on event handler", () => {
-        const message = {
-          "topic": "client-list",
-          "clients": ["local-messaging", "player-electron", "local-storage", "licensing", "logger"]
-        };
-
-        top.RiseVision.Viewer.LocalMessaging.write.mockClear();
-        playerLocalStorage._handleMessage(message);
-
-        jest.advanceTimersByTime(1000);
-
-        expect(eventHandler).toHaveBeenCalledTimes(0);
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
-          "topic": "storage-licensing-request"
-        });
-
-        jest.advanceTimersByTime(30000);
-
-        expect(eventHandler).toHaveBeenCalledWith({
-          "event": "licensing-unavailable"
-        })
-      });
-
       it("should update authorization and execute 'licensing' event on event handler", () => {
         const message = {
           "from": "storage-module",
@@ -141,14 +117,7 @@ describe("PlayerLocalStorage", () => {
           "userFriendlyStatus": "unauthorized"
         };
 
-        const spy = jest.spyOn(playerLocalStorage, "_clearLicensingRequestTimer");
-
         playerLocalStorage._handleMessage(message);
-
-        // should clear the request timer
-        expect(spy).toHaveBeenCalled();
-        spy.mockReset();
-        spy.mockRestore();
 
         expect(playerLocalStorage.isAuthorized()).toBeFalsy();
         expect(eventHandler).toHaveBeenCalledWith({
