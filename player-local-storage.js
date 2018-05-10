@@ -37,21 +37,23 @@ export default class PlayerLocalStorage {
     this.licensingTimer = null;
   }
 
-  _startLicensingRequestTimer() {
-    this.licensingTimer = setTimeout(() => {
-      this.licensingTries += 1;
+  _licensingRequestTimeout() {
+    this.licensingTries += 1;
 
-      if (this.licensingTries < 30) {
-        // request licensing again after 1 second delay
-        this._sendLicensingRequest();
-        this._startLicensingRequestTimer();
-      } else {
-        // attempted 30 times, notify widget/component
-        this._sendEvent({
-          "event": "licensing-unavailable"
-        });
-      }
-    }, 1000);
+    if (this.licensingTries < 30) {
+      // request licensing again after 1 second delay
+      this._sendLicensingRequest();
+      this._startLicensingRequestTimer();
+    } else {
+      // attempted 30 times, notify widget/component
+      this._sendEvent({
+        "event": "licensing-unavailable"
+      });
+    }
+  }
+
+  _startLicensingRequestTimer() {
+    this.licensingTimer = setTimeout(this._licensingRequestTimeout.bind(this), 1000);
   }
 
   _handleMessage(message) {
