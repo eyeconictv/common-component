@@ -32,28 +32,6 @@ export default class PlayerLocalStorage {
     this.localMessaging.broadcastMessage({topic: "storage-licensing-request"});
   }
 
-  _clearLicensingRequestTimer() {
-    clearTimeout(this.licensingTimer);
-    this.licensingTimer = null;
-  }
-
-  _startLicensingRequestTimer() {
-    this.licensingTimer = setTimeout(() => {
-      this.licensingTries += 1;
-
-      if (this.licensingTries < 30) {
-        // request licensing again after 1 second delay
-        this._sendLicensingRequest();
-        this._startLicensingRequestTimer();
-      } else {
-        // attempted 30 times, notify widget/component
-        this._sendEvent({
-          "event": "licensing-unavailable"
-        });
-      }
-    }, 1000);
-  }
-
   _handleMessage(message) {
     if (!message || !message.topic) {return;}
 
@@ -76,7 +54,7 @@ export default class PlayerLocalStorage {
     let running = required.every((val) => clients.includes(val));
 
     if (running) {
-      this._startLicensingRequestTimer();
+      this._sendLicensingRequest();
       return;
     }
 
@@ -94,8 +72,6 @@ export default class PlayerLocalStorage {
 
   _handleLicensingUpdate(message) {
     if (message && message.hasOwnProperty("isAuthorized")) {
-      this._clearLicensingRequestTimer();
-
       const previousAuthorized = this.authorized;
       const currentAuthorized = message.isAuthorized;
 
