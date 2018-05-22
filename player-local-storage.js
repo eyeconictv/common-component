@@ -2,6 +2,7 @@ export default class PlayerLocalStorage {
   constructor(localMessaging, eventsHandler) {
     this.localMessaging = localMessaging;
     this.eventsHandler = eventsHandler;
+    this.requiredModulesAvailable = false;
     this.requiredModulesTries = 0;
     this.licensingTimer = null;
     this.licensingTries = 0;
@@ -51,9 +52,13 @@ export default class PlayerLocalStorage {
     const clients = message.clients;
     const required = ["local-storage", "licensing"];
 
+    // ignore this client list message if flag already set and licensing request already sent
+    if (this.requiredModulesAvailable) { return; }
+
     let running = required.every((val) => clients.includes(val));
 
     if (running) {
+      this.requiredModulesAvailable = true;
       this._sendLicensingRequest();
       return;
     }
