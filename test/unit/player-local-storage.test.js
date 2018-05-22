@@ -78,6 +78,20 @@ describe("PlayerLocalStorage", () => {
         });
       });
 
+      it("should not send STORAGE-LICENSING-REQUEST when receiving message again and modules are available", () => {
+        const message = {
+          "topic": "client-list",
+          "clients": ["local-messaging", "player-electron", "local-storage", "licensing", "logger"]
+        };
+
+        top.RiseVision.Viewer.LocalMessaging.write.mockClear();
+        playerLocalStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
+        playerLocalStorage._handleMessage(message);
+
+        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(1);
+      });
+
       it("should send CLIENT-LIST-REQUEST 30 more times every 1 second before executing required-modules-unavailable event on event handler", () => {
         const message = {
           "topic": "client-list",
