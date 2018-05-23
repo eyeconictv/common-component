@@ -8,6 +8,7 @@ export default class PlayerLocalStorage {
     this.licensingTries = 0;
     this.authorized = null;
     this.files = new Map();
+    this.folders = new Set();
 
     this._bindReceiveMessagesHandler();
 
@@ -146,20 +147,46 @@ export default class PlayerLocalStorage {
     });
   }
 
+  _watchFolder(folderPath) {
+    this.folders.add(folderPath);
+    this.localMessaging.broadcastMessage({
+      "topic": "WATCH",
+      "filePath": folderPath
+    });
+  }
+
+  _isFolderPath(path) {
+    return path.substring(path.length - 1) === "/";
+  }
+
   /*
   PUBLIC API
    */
 
   watchFiles(filePaths) {
-    if (!this.isAuthorized() || !this.isConnected()) {return;}
+    if (!this.isAuthorized() || !this.isConnected() || !filePaths) {return;}
 
     if (typeof filePaths === "string") {
-      if (!this.files.has(filePaths)) {
-        this._watchFile(filePaths);
+      if (this._isFolderPath(filePaths)) {
+        if (!this.folders.has(filePaths)) {
+          this._watchFolder(filePaths);
+        }
+      } else {
+        if (!this.files.has(filePaths)) {
+          this._watchFile(filePaths);
+        }
       }
     } else if (Array.isArray(filePaths)) {
       const filesNotWatched = filePaths.filter(path => !this.files.has(path));
-      filesNotWatched.forEach(path => this._watchFile(path));
+      filesNotWatched.forEach((path) => {
+        if (this._isFolderPath(path)) {
+          if (!this.folders.has(path)) {
+            this._watchFolder(path);
+          }
+        } else {
+          this._watchFile(path);
+        }
+      });
     }
   }
 

@@ -364,7 +364,31 @@ describe("PlayerLocalStorage", () => {
     });
   });
 
-  describe("_watchFile", () => {
+  describe("_isFolderPath()", () => {
+    beforeEach(()=>{
+      localMessaging = new LocalMessaging();
+      playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
+
+      const message = {
+        "from": "storage-module",
+        "topic": "storage-licensing-update",
+        "isAuthorized": true,
+        "userFriendlyStatus": "authorized"
+      };
+      playerLocalStorage._handleMessage(message);
+    });
+
+    it("should return true", () => {
+      expect(playerLocalStorage._isFolderPath("test-bucket/test-folder/")).toBeTruthy();
+    });
+
+    it("should return false", () => {
+      expect(playerLocalStorage._isFolderPath("test-bucket/test-file.png")).toBeFalsy();
+    });
+
+  });
+
+  describe("_watchFile()", () => {
     beforeEach(()=>{
       localMessaging = new LocalMessaging();
       playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
@@ -388,7 +412,50 @@ describe("PlayerLocalStorage", () => {
     });
   });
 
+  describe("_watchFolder()", () => {
+    beforeEach(()=>{
+      localMessaging = new LocalMessaging();
+      playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
+
+      const message = {
+        "from": "storage-module",
+        "topic": "storage-licensing-update",
+        "isAuthorized": true,
+        "userFriendlyStatus": "authorized"
+      };
+      playerLocalStorage._handleMessage(message);
+    });
+
+    it("should broadcast WATCH of a folder", () => {
+      playerLocalStorage._watchFolder("test-bucket/test-folder/");
+
+      expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
+        "topic": "WATCH",
+        "filePath": "test-bucket/test-folder/"
+      });
+    });
+  });
+
   describe("watchFiles()", () => {
+
+    it("should not execute if filePaths params is falsy", () => {
+      mockViewerLocalMessaging(false);
+      localMessaging = new LocalMessaging();
+      playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
+
+      const spyFile = jest.spyOn(playerLocalStorage, '_watchFile');
+      const spyFolder = jest.spyOn(playerLocalStorage, '_watchFolder');
+
+      playerLocalStorage.watchFiles("");
+
+      expect(spyFile).toHaveBeenCalledTimes(0);
+      expect(spyFolder).toHaveBeenCalledTimes(0);
+
+      spyFile.mockReset();
+      spyFile.mockRestore();
+      spyFolder.mockReset();
+      spyFolder.mockRestore();
+    });
 
     it("should not execute if not connected", () => {
       mockViewerLocalMessaging(false);
@@ -469,6 +536,40 @@ describe("PlayerLocalStorage", () => {
 
       expect(spy).toHaveBeenCalledTimes(1);
       expect(spy).toHaveBeenCalledWith("test3.png");
+
+      spy.mockReset();
+      spy.mockRestore();
+    });
+
+    it("should watch one single folder provided as a param string", () => {
+      const spy = jest.spyOn(playerLocalStorage, '_watchFolder');
+
+      playerLocalStorage.watchFiles("test-bucket/test-folder/");
+
+      expect(spy).toHaveBeenCalledWith("test-bucket/test-folder/");
+
+      spy.mockReset();
+      spy.mockRestore();
+    });
+
+    it("should start watching multiple folders", () => {
+      const spy = jest.spyOn(playerLocalStorage, '_watchFolder');
+
+      playerLocalStorage.watchFiles(["test-bucket/test-folder-1/", "test-bucket/test-folder-2/", "test-bucket/test-folder-3/"]);
+
+      expect(spy).toHaveBeenCalledTimes(3);
+
+      spy.mockReset();
+      spy.mockRestore();
+    });
+
+    it("should only send watch of folders that aren't already being watched", () => {
+      const spy = jest.spyOn(playerLocalStorage, '_watchFolder');
+
+      playerLocalStorage.watchFiles(["test-bucket/test-folder-1/", "test-bucket/test-folder-2/", "test-bucket/test-folder-3/", "test-bucket/test-folder-4/"]);
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith("test-bucket/test-folder-4/");
 
       spy.mockReset();
       spy.mockRestore();
