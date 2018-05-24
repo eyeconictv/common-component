@@ -274,6 +274,35 @@ describe("PlayerLocalStorage", () => {
         });
       });
 
+      it("should execute event on handler when message pertains to file not being watched but is from a watched folder", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-update",
+          "filePath": "test-bucket/test-folder/watched-folder-test-file.png",
+          "status": "stale"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledWith({
+          event: "file-processing",
+          filePath: "test-bucket/test-folder/watched-folder-test-file.png"
+        });
+      });
+
+      it("should not execute event on handler when message pertains to file not being watched and is not from a watched folder", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-update",
+          "filePath": "test-bucket/test-folder-2/unwatched-folder-test-file.png",
+          "status": "stale"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledTimes(0);
+      });
+
       it("should execute 'storage-file-no-exist' event on event handler when status is NOEXIST", () => {
         const message = {
           "from": "storage-module",

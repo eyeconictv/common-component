@@ -98,7 +98,7 @@ export default class PlayerLocalStorage {
     if ( !message || !message.filePath || !message.status ) {return;}
 
     const {filePath, status, osurl} = message;
-    const watchedFileStatus = this.files.get(filePath);
+    const watchedFileStatus = this._getWatchedFileStatus(filePath);
 
     // file is not being watched
     if (!watchedFileStatus) {return;}
@@ -157,6 +157,23 @@ export default class PlayerLocalStorage {
 
   _isFolderPath(path) {
     return path.substring(path.length - 1) === "/";
+  }
+
+  _getWatchedFileStatus(filePath) {
+    let fileStatus = this.files.get(filePath);
+
+    if (!fileStatus) {
+      for (let folderPath of this.folders) {
+        if (filePath.includes(folderPath)) {
+          // this is a file from a watched folder, add to file list and mark its status UNKNOWN
+          this.files.set(filePath, "UNKNOWN");
+          fileStatus = "UNKNOWN";
+          break;
+        }
+      }
+    }
+
+    return fileStatus;
   }
 
   /*
