@@ -9,6 +9,8 @@ export default class PlayerLocalStorage {
     this.authorized = null;
     this.files = new Map();
     this.folders = new Set();
+    this.fileTypes = ["image", "video"];
+    this.fileType = "";
 
     this._bindReceiveMessagesHandler();
 
@@ -107,6 +109,9 @@ export default class PlayerLocalStorage {
 
     this.files.set(filePath, status);
 
+    // file is not of assigned filter type, don't notify listener
+    if(!this._isValidFileType(filePath)) {return;}
+
     switch (status.toUpperCase()) {
       case "CURRENT":
         this._sendEvent({"event": "file-available", filePath, "fileUrl": osurl});
@@ -127,9 +132,12 @@ export default class PlayerLocalStorage {
     if (!message || !message.filePath) {return;}
 
     const {filePath, msg, detail} = message;
-    const watchedFile = this.files.get(filePath);
+    const watchedFileStatus = this._getWatchedFileStatus(filePath);
 
-    if (!watchedFile) {return;}
+    // file is not being watched
+    if (!watchedFileStatus) {return;}
+    // file is not of assigned filter type, don't notify listener
+    if(!this._isValidFileType(filePath)) {return;}
 
     this._sendEvent({"event": "file-error", filePath, msg, detail});
   }
@@ -140,6 +148,9 @@ export default class PlayerLocalStorage {
   }
 
   _watchFile(filePath) {
+    // file is not of assigned filter type, don't watch the file at all
+    if(!this._isValidFileType(filePath)) {return;}
+
     this.files.set(filePath, "UNKNOWN");
     this.localMessaging.broadcastMessage({
       "topic": "WATCH",
@@ -176,12 +187,55 @@ export default class PlayerLocalStorage {
     return fileStatus;
   }
 
+  _isValidFileType(filePath) {
+    let isValid = false;
+    let extensions;
+
+    // no filter set, accept any type
+    if (!this.fileType) {return true;}
+
+    switch(this.fileType) {
+      case "image":
+        extensions = [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".gif", ".webp"];
+        break;
+      case "video":
+        extensions = [".webm", ".mp4", ".ogv", ".ogg"];
+        break;
+      default:
+        extensions = [];
+    }
+
+    for (let extension of extensions) {
+      if ((filePath.toLowerCase()).includes(extension)) {
+        isValid = true;
+        break;
+      }
+    }
+
+    return isValid;
+  }
+
+  _setFileType(type) {
+    // reset file type
+    if (type === "") {
+      this.fileType = "";
+      return;
+    }
+
+    // type is not recognized
+    if (!type || !this.fileTypes.includes(type)) {return;}
+
+    this.fileType = type;
+  }
+
   /*
   PUBLIC API
    */
 
-  watchFiles(filePaths) {
+  watchFiles(filePaths, filterByFileType = "") {
     if (!this.isAuthorized() || !this.isConnected() || !filePaths) {return;}
+
+    this._setFileType(filterByFileType);
 
     if (typeof filePaths === "string") {
       if (this._isFolderPath(filePaths)) {

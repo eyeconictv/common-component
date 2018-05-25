@@ -290,6 +290,22 @@ describe("PlayerLocalStorage", () => {
         });
       });
 
+      it("should execute event on handler when message pertains to file being watched and is valid file type", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-update",
+          "filePath": "test-bucket/test-folder/test-image-file.png",
+          "status": "stale"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/", "image");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledWith({
+          event: "file-processing",
+          filePath: "test-bucket/test-folder/test-image-file.png"
+        });
+      });
+
       it("should not execute event on handler when message pertains to file not being watched and is not from a watched folder", () => {
         const message = {
           "from": "storage-module",
@@ -299,6 +315,19 @@ describe("PlayerLocalStorage", () => {
         };
 
         playerLocalStorage.watchFiles("test-bucket/test-folder/");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledTimes(0);
+      });
+
+      it("should not execute event on handler when message pertains to file being watched but is not a valid file type", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-update",
+          "filePath": "test-bucket/test-folder/test-image-file.png",
+          "status": "stale"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/", "video");
         playerLocalStorage._handleMessage(message);
         expect(eventHandler).toHaveBeenCalledTimes(0);
       });
@@ -372,7 +401,7 @@ describe("PlayerLocalStorage", () => {
         expect(eventHandler).toHaveBeenCalledTimes(0);
       });
 
-      it("should execute 'storage-file-error' event on event handler", () => {
+      it("should execute 'file-error' event on event handler", () => {
         const message = {
           "from": "storage-module",
           "topic": "file-error",
@@ -389,6 +418,72 @@ describe("PlayerLocalStorage", () => {
           msg: message.msg,
           detail: message.detail
         });
+      });
+
+      it("should execute 'file-error' event on event handler when message pertains to file not being watched but is from a watched folder", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-error",
+          "filePath": "test-bucket/test-folder/watched-folder-test-file.png",
+          "msg": "Could not retrieve signed URL",
+          "detail": "Some response details"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledWith({
+          event: "file-error",
+          filePath: message.filePath,
+          msg: message.msg,
+          detail: message.detail
+        });
+      });
+
+      it("should execute 'file-error' event on event handler when message pertains to file watched and is valid file type", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-error",
+          "filePath": "test-bucket/test-folder/test-image-file.png",
+          "msg": "Could not retrieve signed URL",
+          "detail": "Some response details"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/", "image");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledWith({
+          event: "file-error",
+          filePath: message.filePath,
+          msg: message.msg,
+          detail: message.detail
+        });
+      });
+
+      it("should not execute event on handler when message pertains to file not being watched and is not from a watched folder", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-error",
+          "filePath": "test-bucket/test-folder-2/unwatched-folder-test-file.png",
+          "msg": "Could not retrieve signed URL",
+          "detail": "Some response details"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledTimes(0);
+      });
+
+      it("should not execute event on handler when message pertains to file being watched but is not a valid file type", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-error",
+          "filePath": "test-bucket/test-folder/test-image-file.png",
+          "msg": "Could not retrieve signed URL",
+          "detail": "Some response details"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder/", "video");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledTimes(0);
       });
     });
   });
@@ -415,6 +510,79 @@ describe("PlayerLocalStorage", () => {
       expect(playerLocalStorage._isFolderPath("test-bucket/test-file.png")).toBeFalsy();
     });
 
+  });
+
+  describe("_isValidFileType()", () => {
+    beforeEach(()=>{
+      localMessaging = new LocalMessaging();
+      playerLocalStorage = new PlayerLocalStorage(localMessaging, eventHandler);
+
+      const message = {
+        "from": "storage-module",
+        "topic": "storage-licensing-update",
+        "isAuthorized": true,
+        "userFriendlyStatus": "authorized"
+      };
+      playerLocalStorage._handleMessage(message);
+    });
+
+    it("should return true for a valid image file", () => {
+      playerLocalStorage._setFileType("image");
+
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpg")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpeg")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.png")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.bmp")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.svg")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.gif")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.webp")).toBeTruthy();
+    });
+
+    it("should return true for a valid video file", () => {
+      playerLocalStorage._setFileType("video");
+
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.webm")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.mp4")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.ogv")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.ogg")).toBeTruthy();
+    });
+
+    it("should return false for an invalid image file", () => {
+      playerLocalStorage._setFileType("image");
+
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.webm")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.mp4")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.ogv")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.ogg")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.html")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.js")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.css")).toBeFalsy();
+    });
+
+    it("should return false for an invalid video file", () => {
+      playerLocalStorage._setFileType("video");
+
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpg")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpeg")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.png")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.bmp")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.svg")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.gif")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.webp")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.html")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.js")).toBeFalsy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.css")).toBeFalsy();
+    });
+
+    it("should return true when no filter file type set", () => {
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpg")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.webm")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.png")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.mp4")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.svg")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.gif")).toBeTruthy();
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.html")).toBeTruthy();
+    });
   });
 
   describe("_watchFile()", () => {
@@ -599,6 +767,18 @@ describe("PlayerLocalStorage", () => {
 
       expect(spy).toHaveBeenCalledTimes(1);
       expect(spy).toHaveBeenCalledWith("test-bucket/test-folder-4/");
+
+      spy.mockReset();
+      spy.mockRestore();
+    });
+
+    it("should call _setFileType()", () => {
+      const spy = jest.spyOn(playerLocalStorage, '_setFileType');
+
+      playerLocalStorage.watchFiles("test-bucket/test-filter-type.png", "image");
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith("image");
 
       spy.mockReset();
       spy.mockRestore();
