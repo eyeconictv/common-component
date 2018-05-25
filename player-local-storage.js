@@ -175,7 +175,7 @@ export default class PlayerLocalStorage {
 
     if (!fileStatus) {
       for (let folderPath of this.folders) {
-        if (filePath.includes(folderPath)) {
+        if (filePath.startsWith(folderPath)) {
           // this is a file from a watched folder, add to file list and mark its status UNKNOWN
           this.files.set(filePath, "UNKNOWN");
           fileStatus = "UNKNOWN";
@@ -206,7 +206,7 @@ export default class PlayerLocalStorage {
     }
 
     for (let extension of extensions) {
-      if ((filePath.toLowerCase()).includes(extension)) {
+      if ((filePath.toLowerCase()).endsWith(extension)) {
         isValid = true;
         break;
       }

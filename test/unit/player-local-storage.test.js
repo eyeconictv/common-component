@@ -550,6 +550,7 @@ describe("PlayerLocalStorage", () => {
     it("should return false for an invalid image file", () => {
       playerLocalStorage._setFileType("image");
 
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpg.webm")).toBeFalsy();
       expect(playerLocalStorage._isValidFileType("test-bucket/test-file.webm")).toBeFalsy();
       expect(playerLocalStorage._isValidFileType("test-bucket/test-file.mp4")).toBeFalsy();
       expect(playerLocalStorage._isValidFileType("test-bucket/test-file.ogv")).toBeFalsy();
@@ -562,6 +563,7 @@ describe("PlayerLocalStorage", () => {
     it("should return false for an invalid video file", () => {
       playerLocalStorage._setFileType("video");
 
+      expect(playerLocalStorage._isValidFileType("test-bucket/test-file.webm.jpg")).toBeFalsy();
       expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpg")).toBeFalsy();
       expect(playerLocalStorage._isValidFileType("test-bucket/test-file.jpeg")).toBeFalsy();
       expect(playerLocalStorage._isValidFileType("test-bucket/test-file.png")).toBeFalsy();
