@@ -120,7 +120,11 @@ export default class PlayerLocalStorage {
         this._sendEvent({"event": "file-processing", filePath});
         break;
       case "NOEXIST":
-        this._sendEvent({"event": "file-no-exist", filePath});
+        if (this._isFolderPath(filePath)) {
+          this._sendEvent({"event": "folder-no-exist", filePath});
+        } else {
+          this._sendEvent({"event": "file-no-exist", filePath});
+        }
         break;
       case "DELETED":
         this._sendEvent({"event": "file-deleted", filePath});

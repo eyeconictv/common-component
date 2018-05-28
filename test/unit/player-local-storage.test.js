@@ -332,7 +332,7 @@ describe("PlayerLocalStorage", () => {
         expect(eventHandler).toHaveBeenCalledTimes(0);
       });
 
-      it("should execute 'storage-file-no-exist' event on event handler when status is NOEXIST", () => {
+      it("should execute 'file-no-exist' event on event handler when status is NOEXIST", () => {
         const message = {
           "from": "storage-module",
           "topic": "file-update",
@@ -348,7 +348,23 @@ describe("PlayerLocalStorage", () => {
         });
       });
 
-      it("should execute 'storage-file-deleted' event on event handler when status is DELETED", () => {
+      it("should execute 'folder-no-exist' event on event handler when status is NOEXIST and is a watched folder", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-update",
+          "filePath": "test-bucket/test-folder-no-exist/",
+          "status": "noexist"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder-no-exist/");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledWith({
+          event: "folder-no-exist",
+          filePath: "test-bucket/test-folder-no-exist/"
+        });
+      });
+
+      it("should execute 'file-deleted' event on event handler when status is DELETED", () => {
         const message = {
           "from": "storage-module",
           "topic": "file-update",
