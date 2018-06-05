@@ -364,6 +364,22 @@ describe("PlayerLocalStorage", () => {
         });
       });
 
+      it("should execute 'folder-empty' event on event handler when status is EMPTYFOLDER and is a watched folder", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "file-update",
+          "filePath": "test-bucket/test-folder-empty/",
+          "status": "emptyfolder"
+        };
+
+        playerLocalStorage.watchFiles("test-bucket/test-folder-empty/");
+        playerLocalStorage._handleMessage(message);
+        expect(eventHandler).toHaveBeenCalledWith({
+          event: "folder-empty",
+          filePath: "test-bucket/test-folder-empty/"
+        });
+      });
+
       it("should execute 'file-deleted' event on event handler when status is DELETED", () => {
         const message = {
           "from": "storage-module",
