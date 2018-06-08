@@ -146,6 +146,8 @@ export default class PlayerLocalStorage {
     // file is not of assigned filter type, don't notify listener
     if(!this._isValidFileType(filePath)) {return;}
 
+    this.files.set(filePath, "file-error");
+
     this._sendEvent({"event": "file-error", filePath, msg, detail});
   }
 
