@@ -444,6 +444,7 @@ describe("PlayerLocalStorage", () => {
 
         playerLocalStorage.watchFiles("test.png");
         playerLocalStorage._handleMessage(message);
+        expect(playerLocalStorage._getWatchedFileStatus("test.png")).toBe("file-error");
         expect(eventHandler).toHaveBeenCalledWith({
           event: "file-error",
           filePath: message.filePath,
