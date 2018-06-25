@@ -1,11 +1,10 @@
 export default class PlayerLocalStorage {
-  constructor(localMessaging, eventsHandler) {
+  constructor(localMessaging, licensing, eventsHandler) {
     this.localMessaging = localMessaging;
+    this.licensing = licensing;
     this.eventsHandler = eventsHandler;
     this.requiredModulesAvailable = false;
     this.requiredModulesTries = 0;
-    this.licensingTimer = null;
-    this.licensingTries = 0;
     this.authorized = null;
     this.files = new Map();
     this.folders = new Set();
@@ -32,18 +31,12 @@ export default class PlayerLocalStorage {
     this.localMessaging.broadcastMessage({topic: "client-list-request"});
   }
 
-  _sendLicensingRequest() {
-    this.localMessaging.broadcastMessage({topic: "storage-licensing-request"});
-  }
-
   _handleMessage(message) {
     if (!message || !message.topic) {return;}
 
     switch (message.topic.toUpperCase()) {
       case "CLIENT-LIST":
         return this._handleClientListUpdate(message);
-      case "STORAGE-LICENSING-UPDATE":
-        return this._handleLicensingUpdate(message);
       case "FILE-UPDATE":
         return this._handleFileUpdate( message );
       case "FILE-ERROR":
@@ -62,7 +55,7 @@ export default class PlayerLocalStorage {
 
     if (running) {
       this.requiredModulesAvailable = true;
-      this._sendLicensingRequest();
+      this.licensing.requestAuthorization();
       return;
     }
 
@@ -75,24 +68,6 @@ export default class PlayerLocalStorage {
       this._sendEvent({
         "event": "required-modules-unavailable"
       });
-    }
-  }
-
-  _handleLicensingUpdate(message) {
-    if (message && message.hasOwnProperty("isAuthorized")) {
-      const previousAuthorized = this.authorized;
-      const currentAuthorized = message.isAuthorized;
-
-      // detect licensing change
-      if (previousAuthorized !== currentAuthorized) {
-        this.authorized = message.isAuthorized;
-
-        this._sendEvent({
-          "event": message.isAuthorized ? "authorized": "unauthorized",
-        });
-      }
-    } else {
-      console.log(`Error: Invalid STORAGE-LICENSING-UPDATE message - ${message}`);
     }
   }
 
@@ -271,7 +246,7 @@ export default class PlayerLocalStorage {
   }
 
   isAuthorized() {
-    return this.authorized;
+    return this.licensing.isAuthorized();
   }
 
   isConnected() {
