@@ -1,9 +1,12 @@
 export default class PlayerLocalStorageLicensing {
-  constructor(localMessaging, eventsHandler, companyId = "") {
+  constructor(localMessaging, eventsHandler, companyId = "", env = "prod") {
     this.localMessaging = localMessaging;
     this.eventsHandler = eventsHandler;
     this.companyId = companyId;
+    this.env = env;
     this.authorized = null;
+
+    this.SESSION_STORAGE_NAME = "storageLicensingStatus";
   }
 
   _bindReceiveMessagesHandler() {
@@ -46,6 +49,9 @@ export default class PlayerLocalStorageLicensing {
     this.eventsHandler(event);
   }
 
+  _sendStatusEvent(status) {
+    this._sendEvent({"event": status ? "authorized": "unauthorized"});
+  }
 
   _isCompanyWhiteListed(companyId) {
     if (!companyId || typeof companyId !== "string") {return false;}
@@ -58,6 +64,87 @@ export default class PlayerLocalStorageLicensing {
     return whiteList.includes(companyId);
   }
 
+  _supportsSessionStorage() {
+    try {
+      return "sessionStorage" in window && window.sessionStorage !== null;
+    } catch ( e ) {
+      return false;
+    }
+  }
+
+  _getCachedStatus() {
+    return JSON.parse( sessionStorage.getItem( this.SESSION_STORAGE_NAME + "-" + this.companyId ) );
+  }
+
+  _setCachedStatus( data ) {
+    try {
+      sessionStorage.setItem( this.SESSION_STORAGE_NAME + "-" + this.companyId, JSON.stringify( data ) );
+    } catch ( e ) {
+      console.warn( e.message ); // eslint-disable-line no-console
+    }
+  }
+
+  _setStatus( status ) {
+    if ( this._supportsSessionStorage() ) {
+      const now = new Date();
+
+      this._setCachedStatus( { status: status, timestamp: now.getTime() } );
+    }
+
+    this.authorized = status;
+  }
+
+  _hasPassedTwentyFourHours( timestamp ) {
+    const twentyFourInMilliseconds = 24 * 60 * 60 * 1000;
+    const now = new Date();
+
+    return now.getTime() > ( timestamp + twentyFourInMilliseconds );
+  }
+
+  _getServerURL() {
+    const productionUrl = "https://store-dot-rvaserver2.appspot.com";
+    const testingUrl = "https://store-dot-rvacore-test.appspot.com";
+    const serverUrl = (this.env !== "test") ? productionUrl : testingUrl;
+
+    return `${serverUrl}/v1/widget/auth?cid=${encodeURIComponent(this.companyId)}&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db`
+  }
+
+  _handleLicensingResponse(responseText) {
+    try {
+      const responseObject = JSON.parse(responseText);
+
+      this._setStatus(responseObject.authorized);
+      this._sendStatusEvent(responseObject.authorized);
+    }
+    catch(err) {
+      this._sendEvent({"event": "authorization-error", "detail": (typeof err === "string") ? err : JSON.stringify(err)});
+    }
+  }
+
+  _handleLicensingRequestError(requestStatus) {
+    this._sendEvent({"event": "authorization-error", "detail": {statusCode: requestStatus}});
+  }
+
+  _makeLicensingRequest() {
+    const xmlhttp = new XMLHttpRequest();
+    const serverUrl = this._getServerURL();
+
+    xmlhttp.onreadystatechange = () => {
+      try {
+        if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+          this._handleLicensingResponse(xmlhttp.responseText);
+        } else {
+          this._handleLicensingRequestError(xmlhttp.status);
+        }
+      } catch (err) {
+        console.debug("Caught exception: ", err.description);
+      }
+    };
+
+    xmlhttp.open("GET", serverUrl);
+    xmlhttp.send();
+  }
+
   /*
   PUBLIC API
    */
@@ -67,7 +154,7 @@ export default class PlayerLocalStorageLicensing {
     if (!this.companyId || typeof this.companyId !== "string") {
       if (this.authorized !== null) {
         // already know status, send it
-        this._sendEvent({"event": this.authorized ? "authorized": "unauthorized"});
+        this._sendStatusEvent(this.authorized);
       } else {
         // listen for licensing messages
         this._bindReceiveMessagesHandler();
@@ -84,7 +171,24 @@ export default class PlayerLocalStorageLicensing {
       return this._sendEvent({"event": "authorized"});
     }
 
-    //TODO: check session storage
+    if (this._supportsSessionStorage()) {
+      const subscriptionStatus = this._getCachedStatus();
+
+      if (!subscriptionStatus || this._hasPassedTwentyFourHours(subscriptionStatus.timestamp)) {
+        this._makeLicensingRequest();
+      } else {
+        this.authorized = subscriptionStatus.status;
+        this._sendStatusEvent(this.authorized);
+      }
+    } else {
+      // legacy player using old chrome browser
+      if (this.authorized !== null) {
+        // already know status, send it
+        this._sendStatusEvent(this.authorized);
+      } else {
+        this._makeLicensingRequest();
+      }
+    }
   }
 
   isAuthorized() {
