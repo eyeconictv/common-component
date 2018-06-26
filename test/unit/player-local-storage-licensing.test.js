@@ -1,5 +1,6 @@
 import LocalMessaging from "../../local-messaging";
 import PlayerLocalStorageLicensing from "../../player-local-storage-licensing";
+import PlayerLocalStorage from "../../player-local-storage";
 
 describe("PlayerLocalStorageLicensing", () => {
   let playerLocalStorageLicensing = null;
@@ -118,6 +119,98 @@ describe("PlayerLocalStorageLicensing", () => {
 
   });
 
+  describe("_getServerURL", () => {
+
+    it("should return correct production Store request URL", () => {
+      localMessaging = new LocalMessaging();
+      playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "abc123");
+
+      expect(playerLocalStorageLicensing._getServerURL()).toBe("https://store-dot-rvaserver2.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db");
+    });
+
+    it("should return correct test Store request URL", () => {
+      localMessaging = new LocalMessaging();
+      playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "abc123", "test");
+
+      expect(playerLocalStorageLicensing._getServerURL()).toBe("https://store-dot-rvacore-test.appspot.com/v1/widget/auth?cid=abc123&pc=b0cba08a4baa0c62b8cdc621b6f6a124f89a03db");
+    });
+
+  });
+
+  describe("_sendStatusEvent", () => {
+    beforeEach(()=>{
+      localMessaging = new LocalMessaging();
+      playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler);
+    });
+
+    it("should send unauthorized status event", () => {
+      playerLocalStorageLicensing._sendStatusEvent(false);
+      expect(eventHandler).toHaveBeenCalledWith({
+        event: "unauthorized"
+      });
+    });
+
+    it("should send authorized status event", () => {
+      playerLocalStorageLicensing._sendStatusEvent(true);
+      expect(eventHandler).toHaveBeenCalledWith({
+        event: "authorized"
+      });
+    });
+
+  });
+
+  describe("_handleLicensingResponse", () => {
+    let storageStub = null;
+
+    beforeEach(()=>{
+      localMessaging = new LocalMessaging();
+      playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler);
+      storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsSessionStorage").mockImplementation(() => true);
+    });
+
+    afterEach(() => {
+      eventHandler.mockClear();
+      storageStub.mockReset();
+      storageStub.mockRestore();
+    });
+
+    it("should cache status and execute event handler with status", () => {
+      const stub = jest.spyOn(playerLocalStorageLicensing, "_setCachedStatus").mockImplementation(() => null);
+
+      playerLocalStorageLicensing._handleLicensingResponse('{"authorized":true}');
+
+      expect(stub).toHaveBeenCalledTimes(1);
+      expect(stub.mock.calls[0][0]).toHaveProperty("timestamp");
+      expect(stub.mock.calls[0][0].status).toBeTruthy();
+      expect(eventHandler).toHaveBeenCalledWith({event: "authorized"});
+    });
+
+    it("should execute event handler with authorization-error when JSON parsing of response text fails", () => {
+      playerLocalStorageLicensing._handleLicensingResponse('"authorized":true');
+
+      expect(eventHandler.mock.calls[0][0]).toHaveProperty("detail");
+      expect(eventHandler.mock.calls[0][0].detail).toBeTruthy();
+      expect(eventHandler.mock.calls[0][0].event).toEqual("authorization-error");
+    });
+  });
+
+  describe("_handleLicensingRequestError", () => {
+    beforeEach(()=>{
+      localMessaging = new LocalMessaging();
+      playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler);
+    });
+
+    afterEach(() => {
+      eventHandler.mockClear();
+    });
+
+    it("should execute event handler with authorization-error", () => {
+      playerLocalStorageLicensing._handleLicensingRequestError(500);
+
+      expect(eventHandler).toHaveBeenCalledWith({event: "authorization-error", detail: {statusCode: 500}});
+    });
+  });
+
   describe("requestAuthorization", () => {
 
     describe("no company id provided", () => {
@@ -188,6 +281,124 @@ describe("PlayerLocalStorageLicensing", () => {
         expect(eventHandler).toHaveBeenCalledWith({
           "event": "authorized"
         });
+      });
+    });
+
+    describe("company provided - session storage supported", () => {
+
+      let storageStub = null;
+
+      beforeEach(()=>{
+        localMessaging = new LocalMessaging();
+        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "abc123");
+        storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsSessionStorage").mockImplementation(() => true);
+      });
+
+      afterEach(() => {
+        eventHandler.mockClear();
+        storageStub.mockReset();
+        storageStub.mockRestore();
+      });
+
+      it("should make licensing request if no cached status available", () => {
+        const stub1 = jest.spyOn(playerLocalStorageLicensing, "_getCachedStatus").mockImplementation(() => null);
+        const stub2 = jest.spyOn(playerLocalStorageLicensing, "_hasPassedTwentyFourHours").mockImplementation(() => false);
+        const stub3 = jest.spyOn(playerLocalStorageLicensing, "_makeLicensingRequest").mockImplementation(() => null);
+
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(stub3).toHaveBeenCalledTimes(1);
+
+        stub1.mockReset();
+        stub2.mockReset();
+        stub3.mockReset();
+        stub1.mockRestore();
+        stub2.mockRestore();
+        stub3.mockRestore();
+      });
+
+      it("should make licensing request if timestamp passed 24 hours", () => {
+        const stub1 = jest.spyOn(playerLocalStorageLicensing, "_getCachedStatus").mockImplementation(() => { return {status: true, timestamp: 123456}});
+        const stub2 = jest.spyOn(playerLocalStorageLicensing, "_hasPassedTwentyFourHours").mockImplementation(() => true);
+        const stub3 = jest.spyOn(playerLocalStorageLicensing, "_makeLicensingRequest").mockImplementation(() => null);
+
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(stub3).toHaveBeenCalledTimes(1);
+
+        stub1.mockReset();
+        stub2.mockReset();
+        stub3.mockReset();
+        stub1.mockRestore();
+        stub2.mockRestore();
+        stub3.mockRestore();
+      });
+
+      it("should execute event handler with cached session storage status", () => {
+        const stub1 = jest.spyOn(playerLocalStorageLicensing, "_getCachedStatus").mockImplementation(() => { return {status: true, timestamp: 123456}});
+        const stub2 = jest.spyOn(playerLocalStorageLicensing, "_hasPassedTwentyFourHours").mockImplementation(() => false);
+        const stub3 = jest.spyOn(playerLocalStorageLicensing, "_makeLicensingRequest").mockImplementation(() => null);
+
+        expect(playerLocalStorageLicensing.isAuthorized()).toBeNull();
+
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(stub3).toHaveBeenCalledTimes(0);
+        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
+        expect(eventHandler).toHaveBeenCalledWith({event: "authorized"});
+
+        stub1.mockReset();
+        stub2.mockReset();
+        stub3.mockReset();
+        stub1.mockRestore();
+        stub2.mockRestore();
+        stub3.mockRestore();
+      });
+
+    });
+
+    describe("company provided - session storage not supported", () => {
+      let storageStub = null;
+
+      beforeEach(()=>{
+        localMessaging = new LocalMessaging();
+        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "abc123");
+        storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsSessionStorage").mockImplementation(() => false);
+      });
+
+      afterEach(() => {
+        eventHandler.mockClear();
+        storageStub.mockReset();
+        storageStub.mockRestore();
+      });
+
+      it("should execute event handler with status if already exists", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "storage-licensing-update",
+          "isAuthorized": true,
+          "userFriendlyStatus": "authorized"
+        };
+
+        expect(playerLocalStorageLicensing.isAuthorized()).toBeNull();
+
+        playerLocalStorageLicensing._handleMessage(message);
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
+        expect(eventHandler).toHaveBeenCalledWith({event: "authorized"});
+
+      });
+
+      it("should make licensing request if no status available", () => {
+        const stub = jest.spyOn(playerLocalStorageLicensing, "_makeLicensingRequest").mockImplementation(() => null);
+
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(stub).toHaveBeenCalledTimes(1);
+
+        stub.mockReset();
+        stub.mockRestore();
       });
     });
 
