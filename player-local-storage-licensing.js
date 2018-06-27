@@ -137,7 +137,7 @@ export default class PlayerLocalStorageLicensing {
           this._handleLicensingRequestError(xmlhttp.status);
         }
       } catch (err) {
-        console.debug("Caught exception: ", err.description);
+        console.debug("Caught exception: ", err.message);
       }
     };
 
