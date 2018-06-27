@@ -145,6 +145,27 @@ export default class PlayerLocalStorageLicensing {
     xmlhttp.send();
   }
 
+  _requestAuthorizationDirectly() {
+    if (this._supportsSessionStorage()) {
+      const subscriptionStatus = this._getCachedStatus();
+
+      if (!subscriptionStatus || this._hasPassedTwentyFourHours(subscriptionStatus.timestamp)) {
+        this._makeLicensingRequest();
+      } else {
+        this.authorized = subscriptionStatus.status;
+        this._sendStatusEvent(this.authorized);
+      }
+    } else {
+      // legacy player using old chrome browser
+      if (this.authorized !== null) {
+        // already know status, send it
+        this._sendStatusEvent(this.authorized);
+      } else {
+        this._makeLicensingRequest();
+      }
+    }
+  }
+
   /*
   PUBLIC API
    */
@@ -171,24 +192,7 @@ export default class PlayerLocalStorageLicensing {
       return this._sendEvent({"event": "authorized"});
     }
 
-    if (this._supportsSessionStorage()) {
-      const subscriptionStatus = this._getCachedStatus();
-
-      if (!subscriptionStatus || this._hasPassedTwentyFourHours(subscriptionStatus.timestamp)) {
-        this._makeLicensingRequest();
-      } else {
-        this.authorized = subscriptionStatus.status;
-        this._sendStatusEvent(this.authorized);
-      }
-    } else {
-      // legacy player using old chrome browser
-      if (this.authorized !== null) {
-        // already know status, send it
-        this._sendStatusEvent(this.authorized);
-      } else {
-        this._makeLicensingRequest();
-      }
-    }
+    this._requestAuthorizationDirectly();
   }
 
   isAuthorized() {

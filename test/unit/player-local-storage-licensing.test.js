@@ -211,80 +211,9 @@ describe("PlayerLocalStorageLicensing", () => {
     });
   });
 
-  describe("requestAuthorization", () => {
+  describe("_requestAuthorizationDirectly", () => {
 
-    describe("no company id provided", () => {
-
-      beforeEach(()=>{
-        localMessaging = new LocalMessaging();
-        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler);
-      });
-
-      afterEach(() => {
-        eventHandler.mockClear();
-      });
-
-      it("should send licensing request and listen for messages", () => {
-        playerLocalStorageLicensing.requestAuthorization();
-
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
-          "topic": "storage-licensing-request"
-        });
-
-      });
-
-      it("should execute event on handler providing status and not send licensing request when status already available", () => {
-        const message = {
-          "from": "storage-module",
-          "topic": "storage-licensing-update",
-          "isAuthorized": true,
-          "userFriendlyStatus": "authorized"
-        };
-
-
-        playerLocalStorageLicensing._handleMessage(message);
-        playerLocalStorageLicensing.requestAuthorization();
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
-
-        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
-        expect(eventHandler).toHaveBeenCalledWith({
-          "event": "authorized"
-        });
-
-      });
-    });
-
-    describe("company is white listed", () => {
-      afterEach(() => {
-        eventHandler.mockClear();
-      });
-
-      it("should execute event on handler providing authorized status with f114ad26-949d-44b4-87e9-8528afc76ce4", () => {
-        localMessaging = new LocalMessaging();
-        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "f114ad26-949d-44b4-87e9-8528afc76ce4");
-        playerLocalStorageLicensing.requestAuthorization();
-
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
-        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
-        expect(eventHandler).toHaveBeenCalledWith({
-          "event": "authorized"
-        });
-      });
-
-      it("should execute event on handler providing authorized status with 7fa5ee92-7deb-450b-a8d5-e5ed648c575f", () => {
-        localMessaging = new LocalMessaging();
-        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "7fa5ee92-7deb-450b-a8d5-e5ed648c575f");
-        playerLocalStorageLicensing.requestAuthorization();
-
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
-        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
-        expect(eventHandler).toHaveBeenCalledWith({
-          "event": "authorized"
-        });
-      });
-    });
-
-    describe("company provided - session storage supported", () => {
+    describe("session storage supported", () => {
 
       let storageStub = null;
 
@@ -357,7 +286,7 @@ describe("PlayerLocalStorageLicensing", () => {
 
     });
 
-    describe("company provided - session storage not supported", () => {
+    describe("session storage not supported", () => {
       let storageStub = null;
 
       beforeEach(()=>{
@@ -399,6 +328,103 @@ describe("PlayerLocalStorageLicensing", () => {
 
         stub.mockReset();
         stub.mockRestore();
+      });
+    });
+
+  });
+
+  describe("requestAuthorization", () => {
+
+    describe("no company id provided", () => {
+
+      beforeEach(()=>{
+        localMessaging = new LocalMessaging();
+        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler);
+      });
+
+      afterEach(() => {
+        eventHandler.mockClear();
+      });
+
+      it("should send licensing request and listen for messages", () => {
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
+          "topic": "storage-licensing-request"
+        });
+
+      });
+
+      it("should execute event on handler providing status and not send licensing request when status already available", () => {
+        const message = {
+          "from": "storage-module",
+          "topic": "storage-licensing-update",
+          "isAuthorized": true,
+          "userFriendlyStatus": "authorized"
+        };
+
+
+        playerLocalStorageLicensing._handleMessage(message);
+        playerLocalStorageLicensing.requestAuthorization();
+        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
+
+        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
+        expect(eventHandler).toHaveBeenCalledWith({
+          "event": "authorized"
+        });
+
+      });
+    });
+
+    describe("company is white listed", () => {
+      afterEach(() => {
+        eventHandler.mockClear();
+      });
+
+      it("should execute event on handler providing authorized status with f114ad26-949d-44b4-87e9-8528afc76ce4", () => {
+        localMessaging = new LocalMessaging();
+        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "f114ad26-949d-44b4-87e9-8528afc76ce4");
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
+        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
+        expect(eventHandler).toHaveBeenCalledWith({
+          "event": "authorized"
+        });
+      });
+
+      it("should execute event on handler providing authorized status with 7fa5ee92-7deb-450b-a8d5-e5ed648c575f", () => {
+        localMessaging = new LocalMessaging();
+        playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "7fa5ee92-7deb-450b-a8d5-e5ed648c575f");
+        playerLocalStorageLicensing.requestAuthorization();
+
+        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(0);
+        expect(playerLocalStorageLicensing.isAuthorized()).toBeTruthy();
+        expect(eventHandler).toHaveBeenCalledWith({
+          "event": "authorized"
+        });
+      });
+
+      describe("company is not white listed", () => {
+        beforeEach(()=>{
+          localMessaging = new LocalMessaging();
+          playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "abc123");
+        });
+
+        afterEach(() => {
+          eventHandler.mockClear();
+        });
+
+        it("should retrieve status from storage or make request directly", () => {
+          const stub = jest.spyOn(playerLocalStorageLicensing, "_requestAuthorizationDirectly").mockImplementation(() => null);
+
+          playerLocalStorageLicensing.requestAuthorization();
+
+          expect(stub).toHaveBeenCalledTimes(1);
+
+          stub.mockReset();
+          stub.mockRestore();
+        });
       });
     });
 
