@@ -301,7 +301,7 @@ describe("PlayerLocalStorage", () => {
           "status": "noexist"
         };
 
-        playerLocalStorage.watchFiles("test-bucket/test-folder-no-exist/");
+        playerLocalStorage.watchFiles("test-bucket/test-folder-no-exist/", "image");
         playerLocalStorage._handleMessage(message);
         expect(eventHandler).toHaveBeenCalledWith({
           event: "folder-no-exist",
