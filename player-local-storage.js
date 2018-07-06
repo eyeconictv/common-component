@@ -76,6 +76,7 @@ export default class PlayerLocalStorage {
 
     const {filePath, status, osurl} = message;
     const watchedFileStatus = this._getWatchedFileStatus(filePath);
+    const isFolderPath = this._isFolderPath(filePath);
 
     // file is not being watched
     if (!watchedFileStatus) {return;}
@@ -85,7 +86,7 @@ export default class PlayerLocalStorage {
     this.files.set(filePath, status);
 
     // file is not of assigned filter type, don't notify listener
-    if(!this._isValidFileType(filePath)) {return;}
+    if(!isFolderPath && !this._isValidFileType(filePath)) {return;}
 
     switch (status.toUpperCase()) {
       case "CURRENT":
@@ -95,7 +96,7 @@ export default class PlayerLocalStorage {
         this._sendEvent({"event": "file-processing", filePath});
         break;
       case "NOEXIST":
-        if (this._isFolderPath(filePath)) {
+        if (isFolderPath) {
           this._sendEvent({"event": "folder-no-exist", filePath});
         } else {
           this._sendEvent({"event": "file-no-exist", filePath});
