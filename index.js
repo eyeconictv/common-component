@@ -5,6 +5,7 @@ import PlayerLocalStorageLicensing from "./player-local-storage-licensing";
 import Config from './config/config';
 import EventHandler from './event-handler';
 import Logger from './logger';
+import Licensing from './licensing';
 
 export {
   LocalMessaging,
@@ -13,5 +14,6 @@ export {
   PlayerLocalStorageLicensing,
   Config,
   EventHandler,
-  Logger
+  Logger,
+  Licensing
 }
