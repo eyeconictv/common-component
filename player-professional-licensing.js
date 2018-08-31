@@ -19,7 +19,8 @@ export default class Licensing {
   }
 
   _sendLicensingRequest() {
-    this.localMessaging.broadcastMessage({topic: "rpp-licensing-request"});
+    const message = {from: config.componentName, topic: 'rpp-licensing-request'};
+    return localMessaging.broadcastMessage(message);
   }
 
   _handleMessage(message) {
@@ -67,16 +68,11 @@ export default class Licensing {
     this.logger.evt({"event": "authorization-error", "detail": {statusCode: requestStatus}});
   }
 
-  _makeLicensingRequest() {
-    const message = {from: config.componentName, topic: 'licensing-request'};
-    return localMessaging.broadcastMessage(message);
-  }
-
   _requestAuthorizationDirectly() {
     if (this.authorized !== null) { // already know status, send it
       this._sendStatusMessage(this.authorized);
     } else {
-      this._makeLicensingRequest();
+      this._sendLicensingRequest();
     }
   }
 
@@ -98,12 +94,6 @@ export default class Licensing {
       }
 
       return;
-    }
-
-    // company is white listed, consider it authorized
-    if (this._isCompanyWhiteListed(this.config.companyId)) {
-      this.authorized = true;
-      this._requestAuthorizationDirectly();
     }
 
     this._requestAuthorizationDirectly();

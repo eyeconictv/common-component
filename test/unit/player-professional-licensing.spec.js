@@ -1,10 +1,10 @@
-import Licensing from "../../licensing";
+import PlayerProfessionalLicensing from "../../player-professional-licensing";
 import Logger from "../../logger";
 import LocalMessaging from '../../local-messaging';
 import Config from "../../config/config";
 
-describe("Licensing", () => {
-  let licensing = null;
+describe("Player Professional Licensing", () => {
+  let playerProfessionallicensing = null;
   let config = null;
   let componentId = "componentIdTest";
   let logger = null;
@@ -24,7 +24,7 @@ describe("Licensing", () => {
   }
 
   function mockLicensing(authorized) {
-    licensing = {
+    playerProfessionallicensing = {
       requestAuthorization:jest.genMockFn(),
       isAuthorized:()=>{return authorized;}
     };
@@ -47,7 +47,7 @@ describe("Licensing", () => {
 
       localMessaging = new LocalMessaging();
       logger = new Logger(config, localMessaging);
-      licensing = new Licensing(localMessaging, logger, componentId);
+      playerProfessionallicensing = new PlayerProfessionalLicensing(localMessaging, logger, componentId);
 
       logger.externalLogger.log = jest.genMockFn();
     });
@@ -67,9 +67,9 @@ describe("Licensing", () => {
           "userFriendlyStatus": "unauthorized"
         };
 
-        licensing._handleMessage(message);
+        playerProfessionallicensing._handleMessage(message);
 
-        expect(licensing.isAuthorized()).toBeFalsy();
+        expect(playerProfessionallicensing.isAuthorized()).toBeFalsy();
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
           "topic": "licensing-update",
           "isAuthorized": false,
@@ -79,9 +79,9 @@ describe("Licensing", () => {
         message.isAuthorized = true;
         message.userFriendlyStatus = "authorized";
 
-        licensing._handleMessage(message);
+        playerProfessionallicensing._handleMessage(message);
 
-        expect(licensing.isAuthorized()).toBeTruthy();
+        expect(playerProfessionallicensing.isAuthorized()).toBeTruthy();
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
           "topic": "licensing-update",
           "isAuthorized": true,
@@ -97,15 +97,15 @@ describe("Licensing", () => {
           "userFriendlyStatus": "authorized"
         };
 
-        expect(licensing.isAuthorized()).toBeNull();
+        expect(playerProfessionallicensing.isAuthorized()).toBeNull();
 
-        licensing._handleMessage(message);
+        playerProfessionallicensing._handleMessage(message);
 
-        expect(licensing.isAuthorized()).toBeTruthy();
+        expect(playerProfessionallicensing.isAuthorized()).toBeTruthy();
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(1);
 
-        licensing._handleMessage(message);
-        expect(licensing.isAuthorized()).toBeTruthy();
+        playerProfessionallicensing._handleMessage(message);
+        expect(playerProfessionallicensing.isAuthorized()).toBeTruthy();
         expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(1);
 
       });
