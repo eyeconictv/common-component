@@ -73,17 +73,13 @@ export default class Licensing {
    */
 
   requestAuthorization() {
-    // no company id, get authorization from licensing module
-    if (!this.config.companyId || typeof this.config.companyId !== "string") {
-      if (this.authorized !== null) {
-        // already know status, send it
-        this._sendStatusMessage(this.authorized);
-      } else {
-        // listen for licensing messages
-        this._bindReceiveMessagesHandler();
-        // request licensing authorization from Licensing module
-        this._sendLicensingRequest();
-      }
+    if (this.authorized !== null) {
+      // already know status, send it
+      this._sendStatusMessage(this.authorized);
+    } else {
+      // listen for licensing messages
+      this._bindReceiveMessagesHandler();
+      this._sendLicensingRequest();
     }
   }
 
