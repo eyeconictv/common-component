@@ -68,14 +68,6 @@ export default class Licensing {
     this.logger.evt({"event": "authorization-error", "detail": {statusCode: requestStatus}});
   }
 
-  _requestAuthorizationDirectly() {
-    if (this.authorized !== null) { // already know status, send it
-      this._sendStatusMessage(this.authorized);
-    } else {
-      this._sendLicensingRequest();
-    }
-  }
-
   /*
   PUBLIC API
    */
@@ -92,11 +84,7 @@ export default class Licensing {
         // request licensing authorization from Licensing module
         this._sendLicensingRequest();
       }
-
-      return;
     }
-
-    this._requestAuthorizationDirectly();
   }
 
   isAuthorized() {
