@@ -4,6 +4,8 @@ export default class Licensing {
     this.logger = logger;
     this.config = config;
     this.authorized = null;
+
+    this._bindReceiveMessagesHandler();
   }
 
   _sendStatusMessage(status) {
@@ -12,6 +14,8 @@ export default class Licensing {
       "isAuthorized": status ? true : false,
       "userFriendlyStatus" : status ? "authorized" : "unauthorized"
     });
+
+    this.authorized = status;
   }
 
   _bindReceiveMessagesHandler() {
@@ -19,8 +23,8 @@ export default class Licensing {
   }
 
   _sendLicensingRequest() {
-    const message = {from: config.componentName, topic: 'rpp-licensing-request'};
-    return localMessaging.broadcastMessage(message);
+    const message = {from: this.config.componentName, topic: 'rpp-licensing-request'};
+    return this.localMessaging.broadcastMessage(message);
   }
 
   _handleMessage(message) {
