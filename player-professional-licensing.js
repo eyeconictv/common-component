@@ -19,8 +19,8 @@ export default class Licensing {
   }
 
   _sendLicensingRequest() {
-    const message = {from: config.componentName, topic: 'rpp-licensing-request'};
-    return localMessaging.broadcastMessage(message);
+    const message = {from: this.config.componentName, topic: 'rpp-licensing-request'};
+    return this.localMessaging.broadcastMessage(message);
   }
 
   _handleMessage(message) {
