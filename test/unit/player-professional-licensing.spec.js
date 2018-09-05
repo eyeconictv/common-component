@@ -9,6 +9,7 @@ describe("Player Professional Licensing", () => {
   let componentId = "componentIdTest";
   let logger = null;
   let localMessaging = null;
+  let eventHandler = null;
 
   function mockViewerLocalMessaging(connected) {
     top.RiseVision = {};
@@ -33,6 +34,7 @@ describe("Player Professional Licensing", () => {
   beforeEach(() => {
     mockViewerLocalMessaging(true);
     mockLicensing(true);
+    eventHandler = jest.genMockFn();
   });
 
   afterEach(() => {
@@ -47,7 +49,7 @@ describe("Player Professional Licensing", () => {
 
       localMessaging = new LocalMessaging();
       logger = new Logger(config, localMessaging);
-      playerProfessionallicensing = new PlayerProfessionalLicensing(localMessaging, logger, componentId);
+      playerProfessionallicensing = new PlayerProfessionalLicensing(localMessaging, logger, eventHandler, config);
 
       logger.externalLogger.log = jest.genMockFn();
     });
@@ -70,10 +72,8 @@ describe("Player Professional Licensing", () => {
         playerProfessionallicensing._handleMessage(message);
 
         expect(playerProfessionallicensing.isAuthorized()).toBeFalsy();
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
-          "topic": "licensing-update",
-          "isAuthorized": false,
-          "userFriendlyStatus": "unauthorized"
+        expect(eventHandler).toHaveBeenCalledWith({
+          "event": "unauthorized"
         });
 
         message.isAuthorized = true;
@@ -82,10 +82,8 @@ describe("Player Professional Licensing", () => {
         playerProfessionallicensing._handleMessage(message);
 
         expect(playerProfessionallicensing.isAuthorized()).toBeTruthy();
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledWith({
-          "topic": "licensing-update",
-          "isAuthorized": true,
-          "userFriendlyStatus": "authorized"
+        expect(eventHandler).toHaveBeenCalledWith({
+          "event": "authorized"
         });
       });
 
@@ -102,11 +100,11 @@ describe("Player Professional Licensing", () => {
         playerProfessionallicensing._handleMessage(message);
 
         expect(playerProfessionallicensing.isAuthorized()).toBeTruthy();
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(1);
+        expect(eventHandler).toHaveBeenCalledTimes(1);
 
         playerProfessionallicensing._handleMessage(message);
         expect(playerProfessionallicensing.isAuthorized()).toBeTruthy();
-        expect(top.RiseVision.Viewer.LocalMessaging.write).toHaveBeenCalledTimes(1);
+        expect(eventHandler).toHaveBeenCalledTimes(1);
 
       });
     });

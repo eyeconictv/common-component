@@ -1,21 +1,14 @@
 export default class Licensing {
-  constructor(localMessaging, logger, config) {
+  constructor(localMessaging, logger, authorizationEventsHandler, config) {
     this.localMessaging = localMessaging;
     this.logger = logger;
     this.config = config;
     this.authorized = null;
-
-    this._bindReceiveMessagesHandler();
+    this.authorizationEventsHandler = authorizationEventsHandler;
   }
 
-  _sendStatusMessage(status) {
-    this.localMessaging.broadcastMessage({
-      "topic": "licensing-update",
-      "isAuthorized": status ? true : false,
-      "userFriendlyStatus" : status ? "authorized" : "unauthorized"
-    });
-
-    this.authorized = status;
+  _sendStatusEvent(status) {
+    this._sendEvent({"event": status ? "authorized": "unauthorized"});
   }
 
   _bindReceiveMessagesHandler() {
@@ -23,8 +16,7 @@ export default class Licensing {
   }
 
   _sendLicensingRequest() {
-    const message = {from: this.config.componentName, topic: 'rpp-licensing-request'};
-    return this.localMessaging.broadcastMessage(message);
+    this.localMessaging.broadcastMessage({topic: "rpp-licensing-request"});
   }
 
   _handleMessage(message) {
@@ -49,7 +41,7 @@ export default class Licensing {
       if (previousAuthorized !== currentAuthorized) {
         this.authorized = message.isAuthorized;
 
-        this._sendStatusMessage(message.isAuthorized);
+        this._sendStatusEvent(message.isAuthorized);
       }
     } else {
       console.log(`Error: Invalid RPP-LICENSING-UPDATE message - ${message}`);
@@ -61,7 +53,7 @@ export default class Licensing {
       const responseObject = JSON.parse(responseText);
 
       this._setStatus(responseObject.authorized);
-      this._sendStatusMessage(responseObject.authorized);
+      this._sendStatusEvent(responseObject.authorized);
     }
     catch(err) {
       this.logger.evt({"event": "authorization-error", "detail": (typeof err === "string") ? err : JSON.stringify(err)});
@@ -72,6 +64,11 @@ export default class Licensing {
     this.logger.evt({"event": "authorization-error", "detail": {statusCode: requestStatus}});
   }
 
+  _sendEvent(event) {
+    if (!this.authorizationEventsHandler || typeof this.authorizationEventsHandler !== "function" || !event) {return;}
+    this.authorizationEventsHandler(event);
+  }
+
   /*
   PUBLIC API
    */
@@ -79,7 +76,7 @@ export default class Licensing {
   requestAuthorization() {
     if (this.authorized !== null) {
       // already know status, send it
-      this._sendStatusMessage(this.authorized);
+      this._sendStatusEvent(this.authorized);
     } else {
       // listen for licensing messages
       this._bindReceiveMessagesHandler();
