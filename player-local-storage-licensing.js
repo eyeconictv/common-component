@@ -146,16 +146,22 @@ export default class PlayerLocalStorageLicensing {
   }
 
   _requestAuthorizationDirectly() {
+    console.log( "-------------D" );
     if (this._supportsSessionStorage()) {
+      console.log( "-------------E" );
       const subscriptionStatus = this._getCachedStatus();
 
+      console.log( subscriptionStatus );
       if (!subscriptionStatus || this._hasPassedTwentyFourHours(subscriptionStatus.timestamp)) {
+        console.log( "-------------F" );
         this._makeLicensingRequest();
       } else {
+        console.log( "-------------G" );
         this.authorized = subscriptionStatus.status;
         this._sendStatusEvent(this.authorized);
       }
     } else {
+      console.log( "-------------E2" );
       // legacy player using old chrome browser
       if (this.authorized !== null) {
         // already know status, send it
@@ -171,6 +177,7 @@ export default class PlayerLocalStorageLicensing {
    */
 
   requestAuthorization() {
+    console.log( "-------------A" );
     // no company id, get authorization from licensing module
     if (!this.companyId || typeof this.companyId !== "string") {
       if (this.authorized !== null) {
@@ -186,12 +193,14 @@ export default class PlayerLocalStorageLicensing {
       return;
     }
 
+    console.log( "-------------B" );
     // company is white listed, consider it authorized
     if (this._isCompanyWhiteListed(this.companyId)) {
       this.authorized = true;
       return this._sendEvent({"event": "authorized"});
     }
 
+    console.log( "-------------C" );
     this._requestAuthorizationDirectly();
   }
 
