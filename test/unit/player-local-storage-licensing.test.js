@@ -165,7 +165,7 @@ describe("PlayerLocalStorageLicensing", () => {
     beforeEach(()=>{
       localMessaging = new LocalMessaging();
       playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler);
-      storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsSessionStorage").mockImplementation(() => true);
+      storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsLocalStorage").mockImplementation(() => true);
     });
 
     afterEach(() => {
@@ -220,7 +220,7 @@ describe("PlayerLocalStorageLicensing", () => {
       beforeEach(()=>{
         localMessaging = new LocalMessaging();
         playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "abc123");
-        storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsSessionStorage").mockImplementation(() => true);
+        storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsLocalStorage").mockImplementation(() => true);
       });
 
       afterEach(() => {
@@ -292,7 +292,7 @@ describe("PlayerLocalStorageLicensing", () => {
       beforeEach(()=>{
         localMessaging = new LocalMessaging();
         playerLocalStorageLicensing = new PlayerLocalStorageLicensing(localMessaging, eventHandler, "abc123");
-        storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsSessionStorage").mockImplementation(() => false);
+        storageStub = jest.spyOn(playerLocalStorageLicensing, "_supportsLocalStorage").mockImplementation(() => false);
       });
 
       afterEach(() => {
