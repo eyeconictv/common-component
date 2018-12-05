@@ -6,7 +6,7 @@ export default class PlayerLocalStorageLicensing {
     this.env = env;
     this.authorized = null;
 
-    this.SESSION_STORAGE_NAME = "storageLicensingStatus";
+    this.LOCAL_STORAGE_NAME = "storageLicensingStatus";
   }
 
   _bindReceiveMessagesHandler() {
@@ -64,28 +64,28 @@ export default class PlayerLocalStorageLicensing {
     return whiteList.includes(companyId);
   }
 
-  _supportsSessionStorage() {
+  _supportsLocalStorage() {
     try {
-      return "sessionStorage" in window && window.sessionStorage !== null;
+      return "localStorage" in window && window.localStorage !== null;
     } catch ( e ) {
       return false;
     }
   }
 
   _getCachedStatus() {
-    return JSON.parse( sessionStorage.getItem( this.SESSION_STORAGE_NAME + "-" + this.companyId ) );
+    return JSON.parse( localStorage.getItem( this.LOCAL_STORAGE_NAME + "-" + this.companyId ) );
   }
 
   _setCachedStatus( data ) {
     try {
-      sessionStorage.setItem( this.SESSION_STORAGE_NAME + "-" + this.companyId, JSON.stringify( data ) );
+      localStorage.setItem( this.LOCAL_STORAGE_NAME + "-" + this.companyId, JSON.stringify( data ) );
     } catch ( e ) {
       console.warn( e.message ); // eslint-disable-line no-console
     }
   }
 
   _setStatus( status ) {
-    if ( this._supportsSessionStorage() ) {
+    if ( this._supportsLocalStorage() ) {
       const now = new Date();
 
       this._setCachedStatus( { status: status, timestamp: now.getTime() } );
@@ -147,7 +147,7 @@ export default class PlayerLocalStorageLicensing {
 
   _requestAuthorizationDirectly() {
     console.log( "-------------D" );
-    if (this._supportsSessionStorage()) {
+    if (this._supportsLocalStorage()) {
       console.log( "-------------E" );
       const subscriptionStatus = this._getCachedStatus();
 
